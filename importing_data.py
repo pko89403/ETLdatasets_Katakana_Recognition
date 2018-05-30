@@ -19,7 +19,11 @@ testList = open(testPATH, 'r')
 for train in trainList:
     data = train.strip().split()
     train_img.append(data[0])
-    train_label.append(int(data[1]))
+    if(int(data[1]) == 166): data[1]=174
+    if(int(data[1]) == 168): data[1]=175
+    if(int(data[1]) == 170): data[1]=176
+    train_label.append(int(data[1])-174)
+
 
 for valid in validList:
     data = valid.strip().split()
@@ -30,6 +34,17 @@ for test in testList:
     data = test.strip().split()
     test_img.append(data[0])
     test_label.append(int(data[1]))
+
+NUM_CLASSES=48
+
+def input_parser(filename, filelabel):
+    one_hot_res = tf.one_hot(filelabel, 48)
+    print(one_hot_res)
+    #img_file = tf.read_file(filename)
+    #img_decoded = tf.image.decode_image(img_file,channels=1)
+    #img_resize = tf.image.resize_image_with_crop_or_pad(img_decoded,target_width=64,target_height=64)
+    return filename, one_hot_res
+
 
 train_imgs = tf.constant(train_img)
 train_labels = tf.constant(train_label)
@@ -44,36 +59,19 @@ train_data = Dataset.from_tensor_slices((train_imgs, train_labels))
 valid_data = Dataset.from_tensor_slices((valid_imgs, valid_labels))
 test_data = Dataset.from_tensor_slices((test_imgs, test_labels))
 
-NUM_CLASSES=48
-
-def input_parser(train_img, train_label):
-    one_hot = tf.one_hot(train_label, NUM_CLASSES)
-    img_file = tf.read_file(train_img)
-    img_decoded = tf.image.decode_image(img_file, channels=1)
-    img_resize = tf.image.resize_image_with_crop_or_pad(img_decoded,target_width=64,target_height=64)
-    return img_resize, one_hot
-
-train_data.map(input_parser)
+train_data = train_data.map(input_parser)
 valid_data.map(input_parser)
 test_data.map(input_parser)
 
 # create Tensorflow Iterator object
-iterator = Iterator.from_structure(train_data.output_types,
-                                   train_data.output_shapes)
+iterator = train_data.make_initializable_iterator()
 next_element = iterator.get_next()
 
-training_init_op = iterator.make_initializer(train_data)
 
-"""
-with tf.Session() as sess:
-    sess.run(training_init_op)
-
-    while True:
-        try:
-
-            elem = sess.run(next_element)
-            print(elem)
-        except tf.errors.OutOfRangeError:
-            print("End of training dataset.")
-            break
-"""
+sess = tf.Session()
+sess.run(iterator.initializer)
+while True:
+    try:
+        print(sess.run(next_element))
+    except tf.errors.OutOfRangeError:
+        break

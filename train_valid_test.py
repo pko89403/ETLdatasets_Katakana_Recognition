@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-imagesPATHS = 'E:/python_workspace/ETLdatasets/katakana/'
+imagesPATHS = 'E:/python_workspace/ETLdatasets/katakana2/'
 
 trainDataName = './train_dataLIst.csv'
 validDataName = './valid_dataList.csv'
